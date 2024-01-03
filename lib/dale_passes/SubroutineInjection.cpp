@@ -78,7 +78,14 @@ void SubroutineInjection::getAnalysisUsage(AnalysisUsage &AU) const
 
 bool SubroutineInjection::runOnModule(Module &M)
 {
-  std::cout << "Module Transformation Pass printout" << std::endl;
+  /** TODO: INDEX TRACKING TEST START */
+  TrackIndexOption = true;
+  /** TODO: INDEX TRACKING TEST END */
+
+  std::cout << "~~ Module Transformation Pass printout" << std::endl;
+  std::cout << "~~ inject option = " << InjectionOption << std::endl;
+  std::cout << "~~ index tracking optimisation = " << TrackIndexOption << std::endl;
+  std::cout << "===========\n";
 
   // set default InjectionOption as SAVE_RESTORE
   if (InjectionOption != SAVE_ONLY && InjectionOption != RESTORE_ONLY && InjectionOption != SAVE_RESTORE)
@@ -88,16 +95,16 @@ bool SubroutineInjection::runOnModule(Module &M)
 
   // load live values analysis results.
   FuncBBLiveValsByName = JsonHelper::getLiveValuesResultsFromJson(LIVENESS_JSON_PATH);
-  JsonHelper::printJsonMap(FuncBBLiveValsByName);
+  // JsonHelper::printJsonMap(FuncBBLiveValsByName);
   std::cout << "===========\n";
 
   // load Tracked values analysis results.
   FuncBBTrackedValsByName = JsonHelper::getTrackedValuesResultsFromJson(TRACKED_VALS_JSON_PATH);
-  JsonHelper::printJsonMap(FuncBBTrackedValsByName);
+  // JsonHelper::printJsonMap(FuncBBTrackedValsByName);
   std::cout << "===========\n";
 
   FuncValuePtrs = getFuncValuePtrsMap(M, FuncBBTrackedValsByName);
-  printFuncValuePtrsMap(FuncValuePtrs, M);
+  // printFuncValuePtrsMap(FuncValuePtrs, M);
 
   // re-build tracked values pointer map
   std::cout << "#TRACKED VALUES ======\n";
@@ -110,23 +117,23 @@ bool SubroutineInjection::runOnModule(Module &M)
   LiveValues::LivenessResult funcBBLiveValsMap = fullLiveValsInfo.first;
   LiveValues::FuncVariableDefMap funcVariableDefMap = fullLiveValsInfo.second;
 
-  for (auto fIter : funcVariableDefMap)
-  {
-    /** TODO: is for debugging */
-    Function *F = fIter.first;
-    LiveValues::VariableDefMap sizeMap = fIter.second;
-    std::cout << "INI SIZE ANALYSIS RESULTS FOR FUNC " << JsonHelper::getOpName(F, &M) << " :" << std::endl;
-    for (auto vIter : sizeMap)
-    {
-      Value *val = const_cast<Value *>(vIter.first);
-      int size = vIter.second;
-      std::cout << "  " << JsonHelper::getOpName(val, &M) << "(" << val << ") : " << size << " bytes" << std::endl;
-    }
-  }
+  // for (auto fIter : funcVariableDefMap)
+  // {
+  //   /** TODO: is for debugging */
+  //   Function *F = fIter.first;
+  //   LiveValues::VariableDefMap sizeMap = fIter.second;
+  //   std::cout << "INI SIZE ANALYSIS RESULTS FOR FUNC " << JsonHelper::getOpName(F, &M) << " :" << std::endl;
+  //   for (auto vIter : sizeMap)
+  //   {
+  //     Value *val = const_cast<Value *>(vIter.first);
+  //     int size = vIter.second;
+  //     std::cout << "  " << JsonHelper::getOpName(val, &M) << "(" << val << ") : " << size << " bytes" << std::endl;
+  //   }
+  // }
 
   bool isModified = injectSubroutines(M, funcBBTrackedValsMap, funcBBLiveValsMap, funcVariableDefMap);
 
-  printCheckPointBBs(funcBBTrackedValsMap, M);
+  // printCheckPointBBs(funcBBTrackedValsMap, M);
 
   return isModified;
 }
@@ -338,18 +345,18 @@ bool SubroutineInjection::injectSubroutines(
     CheckpointBBOldNewValsMap bbCheckpointsOldNewVals = initBBCheckpointsOldNewVals(bbCheckpoints);
 
     // testing:
-    std::cout << "\n\n===========================" << std::endl;
-    std::cout << "\n\nFiltered " << JsonHelper::getOpName(&F, &M) << " tracked vals:" << std::endl;
-    for (auto iter : bbCheckpoints)
-    {
-      std::cout << JsonHelper::getOpName(iter.first, &M) << std::endl;
-      for (auto iterr : iter.second)
-      {
-        std::cout << "  " << JsonHelper::getOpName(iterr, &M) << std::endl;
-      }
-    }
-    std::cout << "===========================\n\n"
-              << std::endl;
+    // std::cout << "\n\n===========================" << std::endl;
+    // std::cout << "\n\nFiltered " << JsonHelper::getOpName(&F, &M) << " tracked vals:" << std::endl;
+    // for (auto iter : bbCheckpoints)
+    // {
+    //   std::cout << JsonHelper::getOpName(iter.first, &M) << std::endl;
+    //   for (auto iterr : iter.second)
+    //   {
+    //     std::cout << "  " << JsonHelper::getOpName(iterr, &M) << std::endl;
+    //   }
+    // }
+    // std::cout << "===========================\n\n"
+    //           << std::endl;
 
     if (bbCheckpoints.size() == 0)
     {
@@ -639,6 +646,13 @@ bool SubroutineInjection::injectSubroutines(
                     call_params.push_back(IR.getInt32(stackArraySize));
                     call_params.push_back(IR.getInt32(ceil((float)paddedValSizeBytes / (float)ckptMemSegContainedTypeSize)));
 
+                    /** TODO: testing for index tracking optimisation start*/
+                    for (Value* val : call_params)
+                    {
+                      std::cout << "*1: " << JsonHelper::getOpName(val, &M) << std::endl;
+                    }
+                    /** TODO: testing for index tracking optimisation end*/
+
                     // void mem_cpy_index_f(float* dest, float* src, int* index_list, int* sp)
                     CallInst *call1 = CallInst::Create(func_mem_cpy_index_f, call_params, "", saveBBTerminator);
                     Instruction *resetIdx = new StoreInst(llvm::ConstantInt::get(Type::getInt32Ty(F.getContext()), 0), index, saveBBTerminator);
@@ -744,6 +758,13 @@ bool SubroutineInjection::injectSubroutines(
                     call_params.push_back(index);
                     call_params.push_back(IR.getInt32(stackArraySize));
                     call_params.push_back(IR.getInt32(ceil((float)paddedValSizeBytes / (float)ckptMemSegContainedTypeSize)));
+
+                    /** TODO: testing for index tracking optimisation start*/
+                    for (Value* val : call_params)
+                    {
+                      std::cout << "*2: " << JsonHelper::getOpName(val, &M) << std::endl;
+                    }
+                    /** TODO: testing for index tracking optimisation end*/
 
                     // void mem_cpy_index_f(float* dest, float* src, int* index_list, int* sp)
                     CallInst *call1 = CallInst::Create(func_mem_cpy_index_f, call_params, "", saveBBTerminator);
@@ -1022,7 +1043,7 @@ bool SubroutineInjection::injectSubroutines(
                                        &funcBBLiveValsMap, funcSaveBBsLiveOutMap,
                                        funcRestoreBBsLiveOutMap, funcJunctionBBsLiveOutMap,
                                        &bbCheckpointsOldNewVals, &allTrackedValVersions);
-            printf("----------------\n");
+            // printf("----------------\n");
           }
         }
         // store ckpt size into map
@@ -1356,14 +1377,14 @@ void SubroutineInjection::processUpdateRequest(SubroutineInjection::BBUpdateRequ
   Function *F = currBB->getParent();
   Module *M = F->getParent();
 
-  std::cout << "---\n";
-  std::cout << "prevBB:{" << JsonHelper::getOpName(prevBB, M) << "}\n";
-  std::cout << "currBB:{" << JsonHelper::getOpName(currBB, M) << "}\n";
-  std::cout << "oldVal=" << JsonHelper::getOpName(oldVal, M) << "; newVal=" << JsonHelper::getOpName(newVal, M) << "\n";
+  // std::cout << "---\n";
+  // std::cout << "prevBB:{" << JsonHelper::getOpName(prevBB, M) << "}\n";
+  // std::cout << "currBB:{" << JsonHelper::getOpName(currBB, M) << "}\n";
+  // std::cout << "oldVal=" << JsonHelper::getOpName(oldVal, M) << "; newVal=" << JsonHelper::getOpName(newVal, M) << "\n";
 
   // stop after we loop back to (and re-process) startBB
   bool isStop = currBB == startBB && visitedBBs->count(currBB);
-  std::cout << "isStop=" << isStop << "\n";
+  // std::cout << "isStop=" << isStop << "\n";
 
   // tracks history of the valueVersions set across successive visits of this BB.
   std::set<Value *> bbValueVersions = getOrDefault(currBB, visitedBBs); // marks BB as visited (if not already)
@@ -1382,7 +1403,7 @@ void SubroutineInjection::processUpdateRequest(SubroutineInjection::BBUpdateRequ
   {
     if (isPhiInstExistForIncomingBBForTrackedVal(valueVersions, currBB, prevBB))
     {
-      std::cout << "MODIFY EXISTING PHI NODE\n";
+      // std::cout << "MODIFY EXISTING PHI NODE\n";
       // modify existing phi input from %oldVal to %newVal
       for (auto phiIter = currBB->phis().begin(); phiIter != currBB->phis().end(); phiIter++)
       {
@@ -1409,7 +1430,7 @@ void SubroutineInjection::processUpdateRequest(SubroutineInjection::BBUpdateRequ
               std::string incomingBBName = JsonHelper::getOpName(incomingBB, M);
               std::string valueName = JsonHelper::getOpName(incomingValue, M);
               std::string newValName = JsonHelper::getOpName(newVal, M);
-              std::cout << "modify " << phiName << ": change [" << valueName << ", " << incomingBBName << "] to [" << newValName << ", " << incomingBBName << "]\n";
+              // std::cout << "modify " << phiName << ": change [" << valueName << ", " << incomingBBName << "] to [" << newValName << ", " << incomingBBName << "]\n";
             }
           }
         }
@@ -1421,14 +1442,14 @@ void SubroutineInjection::processUpdateRequest(SubroutineInjection::BBUpdateRequ
     }
     else
     {
-      std::cout << "ADD NEW PHI NODE\n";
+      // std::cout << "ADD NEW PHI NODE\n";
       // make new phi node
       std::string bbName = JsonHelper::getOpName(currBB, M).erase(0, 1);
       std::string newValName = JsonHelper::getOpName(newVal, M).erase(0, 1);
       std::vector<BasicBlock *> predecessors = getBBPredecessors(currBB);
       Instruction *firstInst = &*(currBB->begin());
       PHINode *newPhi = PHINode::Create(oldVal->getType(), predecessors.size(), newValName + ".phi", firstInst);
-      std::cout << "added new phi: " << JsonHelper::getOpName(dyn_cast<Value>(newPhi), M) << "\n";
+      // std::cout << "added new phi: " << JsonHelper::getOpName(dyn_cast<Value>(newPhi), M) << "\n";
       for (BasicBlock *predBB : predecessors)
       {
         // if pred has exit edge to startBB and val is live-out from it, add new entry in new phi instruction.
@@ -1437,7 +1458,7 @@ void SubroutineInjection::processUpdateRequest(SubroutineInjection::BBUpdateRequ
                              funcJunctionBBsLiveOutMap))
         {
           Value *phiInput = (predBB == prevBB) ? newVal : oldVal;
-          std::cout << "  add to phi: {" << JsonHelper::getOpName(phiInput, M) << ", " << JsonHelper::getOpName(predBB, M) << "}\n";
+          // std::cout << "  add to phi: {" << JsonHelper::getOpName(phiInput, M) << ", " << JsonHelper::getOpName(predBB, M) << "}\n";
           newPhi->addIncoming(phiInput, predBB);
           valueVersions.insert(phiInput);
         }
@@ -1449,7 +1470,7 @@ void SubroutineInjection::processUpdateRequest(SubroutineInjection::BBUpdateRequ
         Instruction *inst = &*instIter;
         if (inst != dyn_cast<Instruction>(newPhi)) // don't update new phi instruction
         {
-          std::cout << "  try updating inst '" << JsonHelper::getOpName(dyn_cast<Value>(inst), M) << "'\n";
+          // std::cout << "  try updating inst '" << JsonHelper::getOpName(dyn_cast<Value>(inst), M) << "'\n";
           replaceOperandsInInst(inst, oldVal, newPhi);
         }
         if (valueVersions.count(inst))
@@ -1519,20 +1540,20 @@ void SubroutineInjection::processUpdateRequest(SubroutineInjection::BBUpdateRequ
     }
   }
 
-  std::cout << "@@@ valueVersions: (";
-  for (auto valIter : valueVersions)
-  {
-    Value *val = &*valIter;
-    std::cout << JsonHelper::getOpName(val, M) << ", ";
-  }
-  std::cout << ")" << std::endl;
-  std::cout << "@@@ bbValueVersions: (";
-  for (auto valIter : bbValueVersions)
-  {
-    Value *val = &*valIter;
-    std::cout << JsonHelper::getOpName(val, M) << ", ";
-  }
-  std::cout << ")" << std::endl;
+  // std::cout << "@@@ valueVersions: (";
+  // for (auto valIter : valueVersions)
+  // {
+  //   Value *val = &*valIter;
+  //   std::cout << JsonHelper::getOpName(val, M) << ", ";
+  // }
+  // std::cout << ")" << std::endl;
+  // std::cout << "@@@ bbValueVersions: (";
+  // for (auto valIter : bbValueVersions)
+  // {
+  //   Value *val = &*valIter;
+  //   std::cout << JsonHelper::getOpName(val, M) << ", ";
+  // }
+  // std::cout << ")" << std::endl;
 }
 
 void SubroutineInjection::updateMapEntry(BasicBlock *key, std::set<Value *> newVal, std::map<BasicBlock *, std::set<Value *>> *map)
@@ -1679,7 +1700,7 @@ bool SubroutineInjection::replaceOperandsInInst(Instruction *inst, Value *oldVal
       *operandIter = newVal;
       hasReplaced = true;
       std::string newValName = JsonHelper::getOpName(*operandIter, M);
-      std::cout << "Replacement: OldVal=" << valName << "; NewVal=" << newValName << "\n";
+      // std::cout << "Replacement: OldVal=" << valName << "; NewVal=" << newValName << "\n";
     }
   }
   return hasReplaced;
@@ -1698,7 +1719,7 @@ void SubroutineInjection::updateCkptBBMap(BasicBlock *ckptBB, Value *newVal, std
     {
       ckptBBOldNewTrackedVals->erase(originalTrackedVal);
       ckptBBOldNewTrackedVals->emplace(originalTrackedVal, newVal);
-      std::cout << ">> " << JsonHelper::getOpName(ckptBB, M) << ": Replaced " << JsonHelper::getOpName(val, M) << " with " << JsonHelper::getOpName(newVal, M) << std::endl;
+      // std::cout << ">> " << JsonHelper::getOpName(ckptBB, M) << ": Replaced " << JsonHelper::getOpName(val, M) << " with " << JsonHelper::getOpName(newVal, M) << std::endl;
       break; // there should only be one version of value in ckptBBTrackedVals set
     }
   }
@@ -1746,13 +1767,13 @@ void SubroutineInjection::updateAllTrackedValVersionsMap(Value *originalTrackedV
 {
   if (allTrackedValVersions->count(originalTrackedVal))
   {
-    std::cout << "£££ add " << JsonHelper::getOpName(newTrackedVal, M) << " to " << JsonHelper::getOpName(originalTrackedVal, M) << " set" << std::endl;
+    // std::cout << "£££ add " << JsonHelper::getOpName(newTrackedVal, M) << " to " << JsonHelper::getOpName(originalTrackedVal, M) << " set" << std::endl;
     std::set<const Value *> *valVersionsSet = &allTrackedValVersions->at(originalTrackedVal);
     valVersionsSet->insert(newTrackedVal);
   }
   else
   {
-    std::cout << "£££ XX " << JsonHelper::getOpName(newTrackedVal, M) << " not found!" << std::endl;
+    // std::cout << "£££ XX " << JsonHelper::getOpName(newTrackedVal, M) << " not found!" << std::endl;
   }
 }
 

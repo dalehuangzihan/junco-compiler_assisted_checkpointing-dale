@@ -29,6 +29,7 @@
 #define CKPT_SIZE (3 + 2097192/8) // must have brackets around arithmetic!
 
 #define TYPE float
+#define dataType double
 
 struct bench_args_t {
     float result[GRID_ROWS * GRID_COLS];

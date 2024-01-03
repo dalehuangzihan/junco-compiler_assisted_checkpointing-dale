@@ -202,7 +202,7 @@ JsonHelper::getFuncBBTrackedValsMap(
   for (auto &F : M.getFunctionList())
   {
     std::string funcName = JsonHelper::getOpName(&F, &M);
-    std::cout<<"\n"<<funcName<<":\n";
+    // std::cout<<"\n"<<funcName<<":\n";
     if (jsonMap.count(funcName) && funcValuePtrsMap.count(&F))
     {
       SubroutineInjection::ValuePtrsMap valuePtrsMap = funcValuePtrsMap.at(&F);
@@ -213,7 +213,7 @@ JsonHelper::getFuncBBTrackedValsMap(
       {
         const BasicBlock* bb = &(*bbIter);
         std::string bbName = JsonHelper::getOpName(bb, &M);
-        std::cout<<"  "<<bbName<<":\n    ";
+        // std::cout<<"  "<<bbName<<":\n    ";
         std::set<const Value*> trackedVals;
         if (bbTrackedVals_json.count(bbName))
         {
@@ -228,14 +228,14 @@ JsonHelper::getFuncBBTrackedValsMap(
               // get pointers to values corresponding to value name
               const Value* val = valuePtrsMap.at(valName);
               trackedVals.insert(val);
-              std::cout<<JsonHelper::getOpName(val, &M)<< " ";
+              // std::cout<<JsonHelper::getOpName(val, &M)<< " ";
             }
           }
-          std::cout<<"\n";
+          // std::cout<<"\n";
         }
         bbTrackedValsMap.emplace(bb, trackedVals);
       }
-      std::cout<<"\n";
+      // std::cout<<"\n";
       funcBBTrackedValsMap.emplace(&F, bbTrackedValsMap);
     }
     else
@@ -526,7 +526,7 @@ JsonHelper::getFuncBBLiveValsInfo(
   {
     LiveValues::VariableDefMap valSizeMap;
     std::string funcName = JsonHelper::getOpName(&F, &M);
-    std::cout<<"\n"<<funcName<<":\n";
+    // std::cout<<"\n"<<funcName<<":\n";
     if (jsonMap.count(funcName) && funcValuePtrsMap.count(&F))
     {
       // std::cout<<JsonHelper::getOpName(&F, &M)<<"\n";
@@ -538,7 +538,7 @@ JsonHelper::getFuncBBLiveValsInfo(
       {
         const BasicBlock* bb = &(*bbIter);
         std::string bbName = JsonHelper::getOpName(bb, &M);
-        std::cout<<"  "<<bbName<<":\n";
+        // std::cout<<"  "<<bbName<<":\n";
         std::set<const Value*> liveInVals;
         std::set<const Value*> liveOutVals;
         if (bbLiveVals_json.count(bbName))
@@ -550,7 +550,7 @@ JsonHelper::getFuncBBLiveValsInfo(
           std::set<std::pair<std::string, int>> liveOutVals_json = bbLiveVals_json.at(bbName).liveOutVals_json;
 
           // process live-in values
-          std::cout<<"    live-in\n        ";
+          // std::cout<<"    live-in\n        ";
           std::set<std::pair<std::string, int>>::const_iterator valIt;
           for (valIt = liveInVals_json.cbegin(); valIt != liveInVals_json.cend(); valIt++)
           {
@@ -562,13 +562,13 @@ JsonHelper::getFuncBBLiveValsInfo(
               const Value* val = valuePtrsMap.at(valName);
               liveInVals.insert(val);
               valSizeMap.emplace(val, valSize);
-              std::cout<<JsonHelper::getOpName(val, &M)<< " ";
+              // std::cout<<JsonHelper::getOpName(val, &M)<< " ";
             }
           }
-          std::cout<<"\n";
+          // std::cout<<"\n";
 
           // process live-out values
-          std::cout<<"    live-out\n        ";
+          // std::cout<<"    live-out\n        ";
           for (valIt = liveOutVals_json.cbegin(); valIt != liveOutVals_json.cend(); valIt++)
           {
             std::string valName = (*valIt).first;
@@ -579,10 +579,10 @@ JsonHelper::getFuncBBLiveValsInfo(
               const Value* val = valuePtrsMap.at(valName);
               liveOutVals.insert(val);
               valSizeMap.emplace(val, valSize);
-              std::cout<<JsonHelper::getOpName(val, &M)<< " ";
+              // std::cout<<JsonHelper::getOpName(val, &M)<< " ";
             }
           }
-          std::cout<<"\n";
+          // std::cout<<"\n";
         }
         LiveValues::LiveInOutData liveInOutData = {
           .liveInVals = liveInVals,
@@ -590,7 +590,7 @@ JsonHelper::getFuncBBLiveValsInfo(
         };
         bbLiveValsMap.emplace(bb, liveInOutData);
       }
-      std::cout<<"\n";
+      // std::cout<<"\n";
       funcBBLiveValsMap.emplace(&F, bbLiveValsMap);
       funcValDefMap.emplace(&F, valSizeMap);
     }

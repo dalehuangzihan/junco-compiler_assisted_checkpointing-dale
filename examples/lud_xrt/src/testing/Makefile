@@ -17,7 +17,7 @@ lud.ll: ../lud.cpp
 
 split_lud_out.ll: lud.ll
 	#Dale:
-	$(OPT) -enable-new-pm=0 -load=/home/dalehuang/Documents/junco-compiler_assisted_checkpointing/build/lib/libSplitConditionalBB.so -load=/home/dalehuang/Documents/junco-compiler_assisted_checkpointing/build/lib/libLiveValues.so -load=/home/dalehuang/Documents/junco-compiler_assisted_checkpointing/build/lib/libSubroutineInjection.so -split-conditional-bb -S $< -live-values -source ../lud.cpp -subroutine-injection -o $@ -inject $(INJECT)
+	$(OPT) -load=/home/dalehuang/documents/junco-compiler_assisted_checkpointing-dale/build/lib/libSplitConditionalBB.so -load=/home/dalehuang/documents/junco-compiler_assisted_checkpointing-dale/build/lib/libLiveValues.so -load=/home/dalehuang/documents/junco-compiler_assisted_checkpointing-dale/build/lib/libSubroutineInjection.so -split-conditional-bb -S $< -live-values -source ../lud.cpp -subroutine-injection -o $@ -inject $(INJECT)
 	#Maxime:
 	# $(OPT) -load=/home/mfrance/hw-sw-migration/junco-compiler_assisted_checkpointing/build_llvm_7/lib/libSplitConditionalBB.so -load=/home/mfrance/hw-sw-migration/junco-compiler_assisted_checkpointing/build_llvm_7/lib/libLiveValues.so -load=/home/mfrance/hw-sw-migration/junco-compiler_assisted_checkpointing/build_llvm_7/lib/libSubroutineInjection.so -split-conditional-bb -S $< -live-values -source ../lud.cpp -subroutine-injection -o $@ -inject $(INJECT)
 
